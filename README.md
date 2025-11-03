@@ -347,7 +347,8 @@ The playbook covers:
 For advanced research directions (ZipNN, chained hierarchical LoRA, recursive SSMs, etc.) that can be incorporated into custom branches, see the playbook's [Advanced Techniques](docs/1000xplaybook.md#advanced-techniques) section.
 
 Additional technical documentation is available in the [`docs/`](docs/) folder:
-- [Compression Implementation Plan](docs/compression-plan.md) - Technical details on the compression pipeline architecture
+- [Pipeline Architecture](docs/pipeline-architecture.md) - Comprehensive technical documentation of the compression pipeline
+- [Compression Implementation Plan](docs/compression-plan.md) - Historical technical notes on implementation planning
 - [Hypercompression Fixes](docs/hypercompression-fixed.md) - Details on pipeline fixes and improvements
 
 ## 🤝 Contributing
