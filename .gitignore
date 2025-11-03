@@ -1,3 +1,4 @@
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -7,15 +8,55 @@ __pycache__/
 .venv/
 env/
 venv/
-.idea/
-.vscode/
+*.egg-info/
 dist/
 build/
-*.egg-info/
 coverage.xml
 htmlcov/
+
+# IDEs
+.idea/
+.vscode/
+
+# OS
 .DS_Store
 *.log
+
+# Model files and checkpoints
 artifacts/
+.artifacts/
 *.ckpt
+*.pt
+*.pth
+*.bin
+*.safetensors
+*.h5
+*.hdf5
+*.onnx
+*.tflite
+*.pb
+*.pkl
+*.pickle
+
+# HuggingFace model cache and directories
+models/
+checkpoints/
+*.model/
+*_model/
+*_models/
+.cache/
+.huggingface/
+transformers_cache/
+
+# Large data files
+*.zip
+*.tar
+*.tar.gz
+*.gz
+data/*.txt
+data/*.json
+data/*.jsonl
+data/*.csv
+data/*.parquet
+!data/.gitkeep
 
