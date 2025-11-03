@@ -1,0 +1,44 @@
+# Example config for publicly available models (no auth required)
+# Try: meta-llama/Llama-2-7b-hf, microsoft/phi-2, google/gemma-2b
+mode: hybrid
+targets:
+  compression_ratio: 1000
+  retained_accuracy: 0.95
+branches:
+  lra:
+    rank: 64
+    sparsity: 0.99
+  kv:
+    cache_tokens: 64
+    student_hidden: 2048
+    activation_matching_weight: 0.2
+  blt:
+    embedding_reduction: 0.85
+    latent_dim: 256
+  sparsity:
+    target_sparsity: 0.995
+    enable_outlier_weighting: true
+logging:
+  experiment: public-model-distilled
+  log_dir: .artifacts/logs
+  tensorboard: true
+distillation:
+  kl_weight: 1.0
+  activation_weight: 0.5
+  token_budget: 1000000
+  hierarchical_lora: true
+finetune:
+  max_tokens: 500000
+  learning_rate: 5e-5
+  patience: 2
+  ppl_tolerance: 0.05
+  mmlu_target: 0.95
+evaluation:
+  run_ppl: false
+  run_mmlu: false
+storage:
+  checkpoint_dir: .artifacts/checkpoints
+  export_format: safetensors
+  save_pretrained: true
+  hf_safe_serialization: true
+

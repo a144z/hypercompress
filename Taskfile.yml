@@ -1,0 +1,30 @@
+version: "3"
+
+tasks:
+  install:
+    desc: Install project dependencies in editable mode
+    cmds:
+      - pip install -e .[dev]
+
+  fmt:
+    desc: Format code using black and isort
+    cmds:
+      - black src tests scripts
+      - isort src tests scripts
+
+  lint:
+    desc: Run static analysis with ruff and mypy
+    cmds:
+      - ruff check src tests scripts
+      - mypy src
+
+  test:
+    desc: Run test suite
+    cmds:
+      - pytest
+
+  pipeline:
+    desc: Launch hybrid compression pipeline with sample config
+    cmds:
+      - python scripts/run_pipeline.py --config configs/sample_hybrid.yaml
+

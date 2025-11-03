@@ -1,0 +1,13 @@
+mode: hybrid
+logging:
+  experiment: sample-hybrid
+branches:
+  lra:
+    rank: 32
+  kv:
+    cache_tokens: 64
+  blt:
+    embedding_reduction: 0.8
+storage:
+  export_format: pt
+

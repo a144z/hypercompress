@@ -1,0 +1,51 @@
+# Fast development config for quick testing (< 1 minute)
+mode: hybrid
+targets:
+  compression_ratio: 100  # Lower target for speed
+  retained_accuracy: 0.90
+  max_rank_fraction: 0.05
+branches:
+  lra:
+    rank: 32  # Lower rank for speed
+    sparsity: 0.95
+    enable_tensor_lra: true
+  kv:
+    cache_tokens: 32  # Smaller cache
+    student_hidden: 768
+    activation_matching_weight: 0.2
+  blt:
+    embedding_reduction: 0.7  # Less aggressive for speed
+    latent_dim: 128
+    multimodal: false
+  sparsity:
+    target_sparsity: 0.95  # Less aggressive for speed
+    enable_outlier_weighting: false
+    bregman_iterations: 2  # Fewer iterations
+logging:
+  experiment: fast-dev-test
+  log_dir: .artifacts/logs
+  enable_wandb: false
+  tensorboard: false  # Disable for speed
+distillation:
+  kl_weight: 1.0
+  activation_weight: 0.5
+  token_budget: 50000  # Very small budget
+  hierarchical_lora: false  # Disable for speed
+finetune:
+  max_tokens: 25000  # Very small budget
+  learning_rate: 1e-4
+  patience: 1  # Less patience for speed
+  ppl_tolerance: 0.1  # More tolerance
+  mmlu_target: 0.85  # Lower target
+evaluation:
+  run_ppl: false
+  run_mmlu: false
+  run_gsm8k: false
+  run_glue: false
+  ablation_branches: false
+storage:
+  checkpoint_dir: .artifacts/checkpoints
+  export_format: pt  # Faster than safetensors
+  save_pretrained: true
+  hf_safe_serialization: false  # Faster
+

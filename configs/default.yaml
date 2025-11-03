@@ -1,0 +1,49 @@
+mode: hybrid
+targets:
+  compression_ratio: 1000
+  retained_accuracy: 0.95
+  max_rank_fraction: 0.02
+branches:
+  lra:
+    rank: 64
+    sparsity: 0.99
+    enable_tensor_lra: true
+  kv:
+    cache_tokens: 128
+    student_hidden: 1024
+    activation_matching_weight: 0.2
+  blt:
+    embedding_reduction: 0.9
+    latent_dim: 256
+    multimodal: true
+  sparsity:
+    target_sparsity: 0.99
+    enable_outlier_weighting: true
+    bregman_iterations: 5
+logging:
+  experiment: default-run
+  log_dir: .artifacts/logs
+  enable_wandb: false
+  tensorboard: false
+distillation:
+  kl_weight: 1.0
+  activation_weight: 1.0
+  token_budget: 1000000
+  hierarchical_lora: true
+finetune:
+  max_tokens: 1000000
+  learning_rate: 0.0001
+  patience: 2
+  ppl_tolerance: 0.05
+  mmlu_target: 0.95
+evaluation:
+  run_ppl: false
+  run_mmlu: false
+  run_gsm8k: false
+  run_glue: false
+  ablation_branches: false
+storage:
+  checkpoint_dir: .artifacts/checkpoints
+  export_format: pt
+  push_to_hub: false
+
