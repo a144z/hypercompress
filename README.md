@@ -120,7 +120,7 @@ For detailed instructions, see [QUICKSTART.md](QUICKSTART.md).
 Hypercompress implements a multi-stage hybrid compression pipeline combining multiple techniques:
 
 ### 1. Low-Rank Approximation (LRA)
-Factorizes weight matrices using singular value decomposition (SVD) to reduce parameter count while preserving performance. Can be applied as weight-level compression or structural factorization (see [Pipeline Architecture](#-compression-pipeline-architecture)).
+Factorizes weight matrices using singular value decomposition (SVD) to reduce parameter count while preserving performance. Can be applied as weight-level compression or structural factorization (see [Pipeline Architecture](docs/pipeline-architecture.md)).
 
 ### 2. KV-Cache Distillation
 Compresses key-value cache projections to reduce memory footprint during inference and transfer knowledge from teacher to student models.
@@ -137,7 +137,7 @@ Replaces linear layers with factorized equivalents to achieve true parameter red
 ### 6. Knowledge Distillation
 Teacher-student training transfers knowledge from large models to compressed students through hierarchical LoRA updates and activation alignment.
 
-> **Note**: For detailed information on how these techniques work together in the pipeline, see the [Compression Pipeline Architecture](#-compression-pipeline-architecture) section.
+> **Note**: For detailed information on how these techniques work together in the pipeline, see the [Pipeline Architecture](docs/pipeline-architecture.md) documentation.
 
 ## ⚙️ Configuration
 
@@ -221,6 +221,8 @@ pytest --cov=distilled_kv --cov-report=html
 ## 🏗️ Compression Pipeline Architecture
 
 Hypercompress implements a multi-phase compression pipeline designed to achieve extreme compression ratios while maintaining model performance.
+
+> **📖 For comprehensive technical documentation**, see [Pipeline Architecture](docs/pipeline-architecture.md) which covers detailed execution phases, component interactions, data flow, and design principles.
 
 ### Pipeline Execution Order
 
