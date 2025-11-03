@@ -21,6 +21,7 @@
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Compression Techniques](#compression-techniques)
+- [Compression Pipeline Architecture](#-compression-pipeline-architecture)
 - [Configuration](#configuration)
 - [Usage Examples](#usage-examples)
 - [Project Structure](#project-structure)
@@ -116,25 +117,27 @@ For detailed instructions, see [QUICKSTART.md](QUICKSTART.md).
 
 ## 🧪 Compression Techniques
 
-Hypercompress implements a multi-stage hybrid compression pipeline:
+Hypercompress implements a multi-stage hybrid compression pipeline combining multiple techniques:
 
 ### 1. Low-Rank Approximation (LRA)
-Factorizes weight matrices using singular value decomposition (SVD) to reduce parameter count while preserving performance.
+Factorizes weight matrices using singular value decomposition (SVD) to reduce parameter count while preserving performance. Can be applied as weight-level compression or structural factorization (see [Pipeline Architecture](#-compression-pipeline-architecture)).
 
 ### 2. KV-Cache Distillation
-Compresses key-value cache projections to reduce memory footprint during inference.
+Compresses key-value cache projections to reduce memory footprint during inference and transfer knowledge from teacher to student models.
 
 ### 3. Byte Latent Transformers (BLT)
-Structural compression of embedding layers by replacing high-dimensional embeddings with low-dimensional latent representations.
+Structural compression of embedding layers by replacing high-dimensional embeddings with low-dimensional latent representations. Runs first in the pipeline to structurally modify the model.
 
 ### 4. Sparsity Acceleration
-Prunes weights to achieve extreme sparsity ratios (up to 99%+) while maintaining model accuracy.
+Prunes weights to achieve extreme sparsity ratios (up to 99%+) while maintaining model accuracy through careful weight selection.
 
 ### 5. Structural Compression
-Replaces linear layers with factorized equivalents to achieve true parameter reduction.
+Replaces linear layers with factorized equivalents to achieve true parameter reduction. This is the key technique that actually reduces model size (not just "effective" compression).
 
 ### 6. Knowledge Distillation
-Teacher-student training transfers knowledge from large models to compressed students.
+Teacher-student training transfers knowledge from large models to compressed students through hierarchical LoRA updates and activation alignment.
+
+> **Note**: For detailed information on how these techniques work together in the pipeline, see the [Compression Pipeline Architecture](#-compression-pipeline-architecture) section.
 
 ## ⚙️ Configuration
 
@@ -215,6 +218,120 @@ Run with coverage:
 pytest --cov=distilled_kv --cov-report=html
 ```
 
+## 🏗️ Compression Pipeline Architecture
+
+Hypercompress implements a multi-phase compression pipeline designed to achieve extreme compression ratios while maintaining model performance.
+
+### Pipeline Execution Order
+
+The compression pipeline follows a carefully orchestrated sequence to maximize compression effectiveness:
+
+#### Phase 1: Structural Compression (First)
+**Byte Latent Transformers (BLT)** runs first to structurally compress embeddings:
+- Replaces `Embedding(V, D)` → `Embedding(V, r) + Linear(r, D)`
+- Updates `lm_head` to match: `Linear(D, V)` → `Linear(D, r) + Linear(r, V)`
+- **Why first**: Must run before other branches modify the model structure
+
+#### Phase 2: Weight-Level Compression
+Multiple branches run concurrently to compress model weights:
+
+1. **Low-Rank Approximation (LRA)**: Computes SVD-based approximations of weight matrices
+2. **KV-Cache Distillation**: Compresses key-value projection weights
+3. **Sparsity**: Prunes weights to achieve high sparsity ratios (up to 99%+)
+
+#### Phase 3: Merge
+- Blends compressed weights from all branches
+- Loads merged weights into the student model
+
+#### Phase 4: Structural Factorization
+**Structural LRA** replaces linear layers with factorized equivalents:
+- `Linear(in, out)` → `Linear(in, r) + Linear(r, out)`
+- **Result**: Actual parameter count reduction (increases `param_ratio`)
+
+#### Phase 5: Final Model
+The compressed model contains:
+- ✅ Structurally compressed embeddings (from BLT)
+- ✅ Factorized linear layers (from structural LRA)
+- ✅ Pruned weights (from sparsity)
+- ✅ Low-rank approximations (from LRA/KV merge)
+
+### Key Design Principles
+
+#### Aggressive Compression by Default
+- For `target_ratio > 10.0`: Structural LRA automatically enables
+- For `--ratio > 50`: Budget planner applies more aggressive settings:
+  - LRA rank: Cut in half
+  - KV cache tokens: Cut in half
+  - BLT latent_dim: Cut in half
+  - Sparsity: Increased by 5%
+
+#### Separation of Concerns
+- **Weight compression** (branches): Preserves structure, modifies weights
+- **Structural changes** (dedicated steps): Actually reduces parameter count
+- Clean execution order prevents interference between phases
+
+### Expected Compression Results
+
+#### Before Fixes:
+```
+param_ratio: 2.52x  (teacher 124M → student 49M)
+blt: 1.00x          (not working - tied weight detection blocking compression)
+effective: 9.15x    (metrics only, no real compression)
+```
+
+#### After Fixes (with `--ratio 100`):
+```
+param_ratio: 20-50x  (actual structural changes)
+blt: 10-50x         (embeddings structurally compressed)
+lra: 50-100x        (all Linear layers factorized)
+effective: 100x+    (combined effect)
+```
+
+### Technical Fixes Implemented
+
+#### 1. BLT Branch - Complete Rewrite
+**Problem**: BLT was detecting tied weights and skipping ALL compression, returning 1.00x ratio.
+
+**Solution**: 
+- Removed tied-weight detection that blocked compression
+- BLT now ALWAYS applies structural compression when enabled
+- Simplified logic: structural mode OR projection-based mode
+- No complex tied-weight handling that prevented compression
+
+#### 2. Pipeline Execution Order
+**Problem**: BLT ran after other branches, finding already-modified embeddings.
+
+**Solution**:
+- BLT runs FIRST (via branch registry order)
+- Structural LRA runs AFTER merge in dedicated step
+- Removed redundant embedding low-rank step that conflicted with BLT
+
+#### 3. Budget Planner - More Aggressive
+Automatically applies aggressive compression settings for high target ratios, ensuring the pipeline actually achieves the requested compression targets.
+
+### Testing the Pipeline
+
+To verify the compression pipeline is working correctly:
+
+```bash
+python scripts/run_hf_pipeline.py \
+  --config configs/hf_fast_dev.yaml \
+  --teacher-model gpt2 \
+  --student-model distilgpt2 \
+  --distill-data data/distill.txt \
+  --finetune-data data/finetune.txt \
+  --seq-len 128 \
+  --stride 64 \
+  --max-chunks 10 \
+  --batch-size 4 \
+  --ratio 100
+```
+
+**Expected output indicators**:
+- BLT should show `>1.00x` (embeddings compressed)
+- `param_ratio` should be `>10x` (actual model size reduction)
+- Logs should show "Structurally replaced embedding..." messages
+
 ## 📚 Advanced Topics
 
 For advanced research directions (ZipNN, chained hierarchical LoRA, recursive SSMs, etc.) that can be incorporated into custom branches, see `docs/1000x-playbook.md`.
@@ -251,6 +368,9 @@ MIT © 2025 Hypercompress Contributors
 - ✅ Removed large model files (380+ MB) from git tracking
 - ✅ Verified artifacts directory is properly ignored by Git
 - ✅ Cleaned up repository cache and verified clean state
+- ✅ Integrated compression pipeline architecture documentation into README
+- ✅ Documented technical fixes (BLT rewrite, pipeline execution order, budget planner)
+- ✅ Added comprehensive pipeline execution phases and design principles
 
 ## 📝 To Do List
 
