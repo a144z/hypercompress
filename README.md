@@ -334,7 +334,21 @@ python scripts/run_hf_pipeline.py \
 
 ## 📚 Advanced Topics
 
-For advanced research directions (ZipNN, chained hierarchical LoRA, recursive SSMs, etc.) that can be incorporated into custom branches, see `docs/1000x-playbook.md`.
+For a comprehensive guide to achieving extreme compression (1000× and beyond), see **[docs/1000xplaybook.md](docs/1000xplaybook.md)**.
+
+The playbook covers:
+- Step-by-step 1000× compression guide
+- Configuration strategies and tuning tips
+- Advanced techniques (iterative compression, custom branches)
+- Troubleshooting common issues
+- Performance benchmarks and best practices
+- Real-world examples
+
+For advanced research directions (ZipNN, chained hierarchical LoRA, recursive SSMs, etc.) that can be incorporated into custom branches, see the playbook's [Advanced Techniques](docs/1000xplaybook.md#advanced-techniques) section.
+
+Additional technical documentation is available in the [`docs/`](docs/) folder:
+- [Compression Implementation Plan](docs/compression-plan.md) - Technical details on the compression pipeline architecture
+- [Hypercompression Fixes](docs/hypercompression-fixed.md) - Details on pipeline fixes and improvements
 
 ## 🤝 Contributing
 
